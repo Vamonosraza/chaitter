@@ -9,7 +9,9 @@
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "com.jessymartinez.chaitter",
+      "buildNumber": "1.0.0"
     },
     "android": {
       "adaptiveIcon": {
