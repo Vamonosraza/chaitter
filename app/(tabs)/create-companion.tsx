@@ -1,13 +1,21 @@
-import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert, ActivityIndicator, ScrollView } from 'react-native';
+import { useAuth } from '@/context/AuthProvider';
+import { supabase } from '@/lib/supabase';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
-import { supabase } from '@/lib/supabase';
-import { useAuth } from '@/context/AuthProvider';
+import React, { useState } from 'react';
+import { ActivityIndicator, Alert, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import DropDownPicker from 'react-native-dropdown-picker';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { v4 as uuidv4 } from 'uuid';
 
 export default function CreateCompanionScreen() {
+    const [open, setOpen] = useState(false);
+    const [value, setValue] = useState(null);
+    const [items, setItems] = useState([
+        { label: 'English', value: 'en' },
+        { label: 'Deutsch', value: 'de' },
+        { label: 'French', value: 'fr' },
+    ]);
     const { user } = useAuth();
     const router = useRouter();
     const [name, setName] = useState('');
@@ -62,6 +70,11 @@ export default function CreateCompanionScreen() {
         }
     };
 
+    // Update languageCode when value changes
+    React.useEffect(() => {
+        if (value) setLanguageCode(value);
+    }, [value]);
+
     return (
         <ScrollView contentContainerStyle={styles.container}>
             <SafeAreaView edges={['top']} style={{ backgroundColor: '#fff' }}>
@@ -80,11 +93,17 @@ export default function CreateCompanionScreen() {
                     value={description}
                     onChangeText={setDescription}
                 />
-                <TextInput
-                    style={styles.input}
-                    placeholder="Language Code (e.g. 'es', 'fr') *"
-                    value={languageCode}
-                    onChangeText={setLanguageCode}
+                <Text style={styles.label}>Select Language *</Text>
+                <DropDownPicker
+                    open={open}
+                    value={value}
+                    items={items}
+                    setOpen={setOpen}
+                    setValue={setValue}
+                    setItems={setItems}
+                    placeholder="Select a language..."
+                    style={{ marginBottom: 16 }}
+                    containerStyle={{ marginBottom: 16 }}
                 />
                 <TextInput
                     style={styles.input}
@@ -135,6 +154,12 @@ const styles = StyleSheet.create({
         marginBottom: 16,
         fontSize: 16,
         backgroundColor: '#f9f9f9',
+    },
+    label: {
+        fontSize: 16,
+        fontWeight: '500',
+        marginBottom: 8,
+        color: '#333',
     },
     createButton: {
         flexDirection: 'row',
