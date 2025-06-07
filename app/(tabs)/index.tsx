@@ -28,7 +28,7 @@ export default function HomeScreen() {
       if (!user) return;
       setLoading(true);
       const { data, error } = await supabase
-        .from('ai_companions')
+        .from('ai_companion')
         .select('*')
         .eq('user_id', user.id)
         .order('created_at', { ascending: false });
