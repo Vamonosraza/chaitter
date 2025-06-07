@@ -93,7 +93,7 @@ export default function CreateCompanionScreen() {
                     value={description}
                     onChangeText={setDescription}
                 />
-                <Text style={styles.label}>Select Language *</Text>
+                
                 <DropDownPicker
                     open={open}
                     value={value}
@@ -148,7 +148,7 @@ const styles = StyleSheet.create({
     form: { width: '100%' },
     input: {
         borderWidth: 1,
-        borderColor: '#ddd',
+        borderColor: '#000', // Changed to black to match DropDownPicker
         borderRadius: 10,
         padding: 14,
         marginBottom: 16,
