@@ -13,6 +13,7 @@ import {
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
+import { useAuth } from '@/context/AuthProvider';
 
 /**
  * Login Screen Component
@@ -23,9 +24,9 @@ import { Ionicons } from '@expo/vector-icons';
 export default function LoginScreen() {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
-    const [isLoading, setIsLoading] = useState(false);
     const [showPassword, setShowPassword] = useState(false);
     const router = useRouter();
+    const { signIn, isLoading } = useAuth();
 
     const validateForm = () => {
         if (!email.trim()) {
@@ -50,20 +51,25 @@ export default function LoginScreen() {
     const handleLogin = async () => {
         if (!validateForm()) return;
 
-        setIsLoading(true);
 
         try {
-            // Simulate authentication process
-            // In a real app, this would call your auth API
-            await new Promise(resolve => setTimeout(resolve, 1500));
-
-            // For now, just navigate to the main app
+            console.log('Attempting to login with:', email);
+            const { error } = await signIn(email, password);
+            
+            if (error) {
+                console.error('Login error:', error.message);
+                Alert.alert('Login Failed', error.message || 'Please check your credentials and try again.');
+                return;
+            }
+            
+            // If successful, navigate to the main app
+            // Note: This will happen automatically if you have route protection,
+            // but including it for clarity
+            console.log('Login successful');
             router.replace('/(tabs)');
         } catch (error) {
-            Alert.alert('Login Failed', 'Please check your credentials and try again.');
-            console.error('Login error:', error);
-        } finally {
-            setIsLoading(false);
+            console.error('Unexpected login error:', error);
+            Alert.alert('Login Failed', 'An unexpected error occurred. Please try again.');
         }
     };
 

@@ -14,6 +14,8 @@ import {
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
+import { useAuth } from '@/context/AuthProvider';
+import { supabase } from '@/lib/supabase';
 
 /**
  * Signup Screen Component
@@ -22,14 +24,15 @@ import { Ionicons } from '@expo/vector-icons';
  * Matches the styling of the login screen for consistency
  */
 export default function SignupScreen() {
+    // useState is when the component needs to manage its own state. In this case we start name as an empty string. When setName is called, it will update 'name' and re-render the component (e.g. when the user types in the input field) and show the updated value.
     const [name, setName] = useState('');
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [confirmPassword, setConfirmPassword] = useState('');
-    const [isLoading, setIsLoading] = useState(false);
     const [showPassword, setShowPassword] = useState(false);
     const [showConfirmPassword, setShowConfirmPassword] = useState(false);
     const router = useRouter();
+    const { signUp, isLoading } = useAuth(); // Use the auth hook
 
     const validateForm = () => {
         if (!name.trim()) {
@@ -69,16 +72,59 @@ export default function SignupScreen() {
     const handleSignup = async () => {
         if (!validateForm()) return;
 
-        setIsLoading(true);
 
         try {
-            // Simulate signup process
-            // In a real app, this would call your auth API
-            await new Promise(resolve => setTimeout(resolve, 1500));
+            console.log('Attempting to sign up with:', email);
+            
+            // First sign up the user. I said error because the signup function returns an error if the email is already in use or the password is too weak. Look at signUp function in context/AuthProvider.tsx
+            const { error } = await signUp(email, password);
+
+            // The error is a SupabaseAuthError with the properties message, code, and details. if error is not null, then the signup failed because the email is already in use or the password is too weak.
+            // If error is null, then the signup was successful and the user needs to confirm their email
+            if (error) {
+                console.error('Signup error:', error.message);
+                Alert.alert('Signup Failed', error.message || 'There was a problem creating your account. Please try again.');
+                return;
+            }
+
+            // Store the name for later - when the user confirms their email
+            // You'll need to create this table in Supabase
+            try {
+                // We need to get the current user ID 
+                const { data: { user } } = await supabase.auth.getUser();
+                
+                if (user) {
+                    console.log('User signed up:', user.id);
+                    // Store additional user data in profiles table
+                    const { error: profileError } = await supabase
+                        .from('profiles')
+                        // Upsert is used to insert or update the profile. This happens here because the user has just signed up and we want to create their profile.
+                        .upsert({ 
+                            id: user.id,
+                            full_name: name,
+                            // Use email as temporary username (make it unique by adding random characters)
+                            username: email.split('@')[0] + Math.floor(Math.random() * 1000),
+                            // These fields can be updated later in user settings
+                            created_at: new Date(),
+                            updated_at: new Date()
+                        });
+                        
+                    if (profileError) {
+                        console.error('Profile update error:', profileError.message);
+                        console.error('Profile updated error details:', JSON.stringify(profileError))
+                    }
+                    else{
+                        console.log('Profile updated successfully for user:', user.id);
+                    }
+                }
+            } catch (profileError) {
+                console.error('Profile update error:', profileError);
+                // Continue even if profile update fails
+            }
 
             Alert.alert(
                 'Account Created',
-                'Your account has been created successfully!',
+                'Please check your email to confirm your account.',
                 [
                     {
                         text: 'OK',
@@ -87,11 +133,10 @@ export default function SignupScreen() {
                 ]
             );
         } catch (error) {
-            Alert.alert('Signup Failed', 'There was a problem creating your account. Please try again.');
-            console.error('Signup error:', error);
-        } finally {
-            setIsLoading(false);
+            console.error('Unexpected signup error:', error);
+            Alert.alert('Signup Failed', 'An unexpected error occurred. Please try again.');
         }
+    
     };
 
     return (

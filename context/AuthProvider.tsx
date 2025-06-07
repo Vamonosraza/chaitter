@@ -57,6 +57,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setIsLoading(true);
         const { error } = await supabase.auth.signUp({ email, password });
         setIsLoading(false);
+        // Will only return an error if sign-up fails. Otherwise, it will create the user in the database and send a confirmation email.
         return { error };
     };
 
