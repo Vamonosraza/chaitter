@@ -1,9 +1,28 @@
+import * as ExpoRandom from 'expo-random';
+// Polyfill for crypto.getRandomValues for uuid in Expo managed workflow
+if (typeof global.crypto === 'undefined') {
+    global.crypto = {} as any;
+}
+if (typeof global.crypto.getRandomValues === 'undefined') {
+    global.crypto.getRandomValues = function <T extends ArrayBufferView | null>(array: T): T {
+        if (array == null) {
+            throw new TypeError('Expected input to be an ArrayBufferView');
+        }
+        const bytes = ExpoRandom.getRandomBytes((array as ArrayBufferView).byteLength);
+        const uint8Array = new Uint8Array(array.buffer, array.byteOffset, array.byteLength);
+        for (let i = 0; i < bytes.length; i++) {
+            uint8Array[i] = bytes[i];
+        }
+        return array;
+    };
+}
+
 import { useAuth } from '@/context/AuthProvider';
 import { supabase } from '@/lib/supabase';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import React, { useState } from 'react';
-import { ActivityIndicator, Alert, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, Alert, KeyboardAvoidingView, Platform, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import DropDownPicker from 'react-native-dropdown-picker';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { v4 as uuidv4 } from 'uuid';
@@ -39,10 +58,12 @@ export default function CreateCompanionScreen() {
     };
 
     const handleCreate = async () => {
+
         if (!validateForm()) return;
         setIsLoading(true);
         try {
             const id = uuidv4();
+            console.log('Creating AI Companion with ID:', id);
             const { error } = await supabase.from('ai_companion').insert({
                 id,
                 name,
@@ -76,69 +97,73 @@ export default function CreateCompanionScreen() {
     }, [value]);
 
     return (
-        <ScrollView contentContainerStyle={styles.container}>
-            <SafeAreaView edges={['top']} style={{ backgroundColor: '#fff' }}>
+        <KeyboardAvoidingView
+            style={{ flex: 1, backgroundColor: '#fff' }}
+            behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        >
+            <SafeAreaView edges={['top']} style={{ flex: 1, backgroundColor: '#fff' }}>
                 <Text style={styles.title}>Create AI Companion</Text>
+                <View style={styles.form}>
+                    <TextInput
+                        style={styles.input}
+                        placeholder="Name *"
+                        value={name}
+                        onChangeText={setName}
+                    />
+                    <TextInput
+                        style={styles.input}
+                        placeholder="Description"
+                        value={description}
+                        onChangeText={setDescription}
+                    />
+                    {/* DropDownPicker is NOT inside a ScrollView to avoid VirtualizedList warning */}
+                    <DropDownPicker
+                        open={open}
+                        value={value}
+                        items={items}
+                        setOpen={setOpen}
+                        setValue={setValue}
+                        setItems={setItems}
+                        placeholder="Select a language..."
+                        style={styles.label}
+                        containerStyle={{ marginBottom: 16 }}
+                        zIndex={1000}
+                    />
+                    <TextInput
+                        style={styles.input}
+                        placeholder="System Prompt (optional)"
+                        value={systemPrompt}
+                        onChangeText={setSystemPrompt}
+                    />
+                    <TextInput
+                        style={styles.input}
+                        placeholder="Avatar URL (optional)"
+                        value={avatarUrl}
+                        onChangeText={setAvatarUrl}
+                    />
+                    <TextInput
+                        style={styles.input}
+                        placeholder="Voice ID (optional)"
+                        value={voiceId}
+                        onChangeText={setVoiceId}
+                    />
+                    <TouchableOpacity
+                        style={[styles.createButton, isLoading && styles.createButtonDisabled]}
+                        onPress={handleCreate}
+                        disabled={isLoading}
+                    >
+                        {isLoading ? (
+                            <ActivityIndicator color="#fff" />
+                        ) : (
+                            <>
+                                <Ionicons name="add-circle-outline" size={20} color="#fff" />
+                                <Text style={styles.createButtonText}>Create</Text>
+                            </>
+                        )}
+                    </TouchableOpacity>
+                </View>
             </SafeAreaView>
-            <View style={styles.form}>
-                <TextInput
-                    style={styles.input}
-                    placeholder="Name *"
-                    value={name}
-                    onChangeText={setName}
-                />
-                <TextInput
-                    style={styles.input}
-                    placeholder="Description"
-                    value={description}
-                    onChangeText={setDescription}
-                />
-                
-                <DropDownPicker
-                    open={open}
-                    value={value}
-                    items={items}
-                    setOpen={setOpen}
-                    setValue={setValue}
-                    setItems={setItems}
-                    placeholder="Select a language..."
-                    style={{ marginBottom: 16 }}
-                    containerStyle={{ marginBottom: 16 }}
-                />
-                <TextInput
-                    style={styles.input}
-                    placeholder="System Prompt (optional)"
-                    value={systemPrompt}
-                    onChangeText={setSystemPrompt}
-                />
-                <TextInput
-                    style={styles.input}
-                    placeholder="Avatar URL (optional)"
-                    value={avatarUrl}
-                    onChangeText={setAvatarUrl}
-                />
-                <TextInput
-                    style={styles.input}
-                    placeholder="Voice ID (optional)"
-                    value={voiceId}
-                    onChangeText={setVoiceId}
-                />
-                <TouchableOpacity
-                    style={[styles.createButton, isLoading && styles.createButtonDisabled]}
-                    onPress={handleCreate}
-                    disabled={isLoading}
-                >
-                    {isLoading ? (
-                        <ActivityIndicator color="#fff" />
-                    ) : (
-                        <>
-                            <Ionicons name="add-circle-outline" size={20} color="#fff" />
-                            <Text style={styles.createButtonText}>Create</Text>
-                        </>
-                    )}
-                </TouchableOpacity>
-            </View>
-        </ScrollView>
+        </KeyboardAvoidingView>
     );
 }
 
