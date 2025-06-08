@@ -103,7 +103,16 @@ export default function CreateCompanionScreen() {
             behavior={Platform.OS === 'ios' ? 'padding' : undefined}
         >
             <SafeAreaView edges={['top']} style={{ flex: 1, backgroundColor: '#fff' }}>
-                <Text style={styles.title}>Create AI Companion</Text>
+                <View style={styles.header}>
+                    <TouchableOpacity 
+                        style={styles.closeButton} 
+                        onPress={() => router.back()}
+                    >
+                        <Ionicons name="close" size={24} color="#4285F4" />
+                    </TouchableOpacity>
+                    <Text style={styles.title}>Create AI Companion</Text>
+                    <View style={{width: 24}} /> {/* Empty view for centering */}
+                </View>
                 <View style={styles.form}>
                     <TextInput
                         style={styles.input}
@@ -170,8 +179,19 @@ export default function CreateCompanionScreen() {
 
 const styles = StyleSheet.create({
     container: { flexGrow: 1, backgroundColor: '#fff', padding: 24 },
-    title: { fontSize: 28, fontWeight: 'bold', color: '#4285F4', marginBottom: 24, textAlign: 'center' },
-    form: { width: '100%' },
+    header: { 
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        width: '100%',
+        paddingHorizontal: 24,
+        marginBottom: 8
+    },
+    closeButton: {
+        padding: 8,
+    },
+    title: { fontSize: 28, fontWeight: 'bold', color: '#4285F4', marginBottom: 24, textAlign: 'center', flex: 1 },
+    form: { width: '100%', paddingHorizontal: 24 },
     input: {
         borderWidth: 1,
         borderColor: '#000', // Changed to black to match DropDownPicker

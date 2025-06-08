@@ -3,6 +3,7 @@ import { View, Text, TextInput, StyleSheet, TouchableOpacity, ActivityIndicator,
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { supabase } from '@/lib/supabase';
 import { Ionicons } from '@expo/vector-icons';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 export default function CompanionDetailScreen() {
     const { id } = useLocalSearchParams();
@@ -101,7 +102,9 @@ export default function CompanionDetailScreen() {
 
     return (
         <ScrollView contentContainerStyle={styles.container}>
+            <SafeAreaView edges={['top']} style={{ backgroundColor: '#fff' }}>
             <Text style={styles.title}>{editing ? 'Edit' : 'View'} AI Companion</Text>
+            </SafeAreaView>
             <View style={styles.form}>
                 <TextInput
                     style={styles.input}
