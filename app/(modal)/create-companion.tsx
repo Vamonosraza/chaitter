@@ -1,22 +1,4 @@
-import * as ExpoRandom from 'expo-random';
-// Polyfill for crypto.getRandomValues for uuid in Expo managed workflow
-if (typeof global.crypto === 'undefined') {
-    global.crypto = {} as any;
-}
-if (typeof global.crypto.getRandomValues === 'undefined') {
-    global.crypto.getRandomValues = function <T extends ArrayBufferView | null>(array: T): T {
-        if (array == null) {
-            throw new TypeError('Expected input to be an ArrayBufferView');
-        }
-        const bytes = ExpoRandom.getRandomBytes((array as ArrayBufferView).byteLength);
-        const uint8Array = new Uint8Array(array.buffer, array.byteOffset, array.byteLength);
-        for (let i = 0; i < bytes.length; i++) {
-            uint8Array[i] = bytes[i];
-        }
-        return array;
-    };
-}
-
+import * as ExpoRandom from 'expo-crypto';
 import { useAuth } from '@/context/AuthProvider';
 import { supabase } from '@/lib/supabase';
 import { Ionicons } from '@expo/vector-icons';
@@ -26,6 +8,24 @@ import { ActivityIndicator, Alert, KeyboardAvoidingView, Platform, StyleSheet, T
 import DropDownPicker from 'react-native-dropdown-picker';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { v4 as uuidv4 } from 'uuid';
+
+// Polyfill for crypto.getRandomValues for uuid in Expo managed workflow
+if (typeof global.crypto === 'undefined') {
+    global.crypto = {} as any;
+}
+if (typeof global.crypto.getRandomValues === 'undefined') {
+    global.crypto.getRandomValues = function(array) {
+        if (array == null) {
+            throw new TypeError('Expected input to be an ArrayBufferView');
+        }
+        const bytes = ExpoRandom.getRandomBytes(array.byteLength);
+        const uint8Array = new Uint8Array(array.buffer, array.byteOffset, array.byteLength);
+        for (let i = 0; i < bytes.length; i++) {
+            uint8Array[i] = bytes[i];
+        }
+        return array;
+    };
+}
 
 export default function CreateCompanionScreen() {
     const [open, setOpen] = useState(false);
@@ -74,6 +74,7 @@ export default function CreateCompanionScreen() {
                 voice_id: voiceId || null,
                 is_active: 'true', // or null/false as needed
                 created_at: new Date().toISOString(),
+                user_id: user?.id || null, // Ensure user ID is set if available
             });
             if (error) {
                 console.error('Error creating companion:', error.message);
